@@ -1,0 +1,70 @@
+; Managed by Ansible for the Issabel lab.
+; Issabel/FreePBX includes this file from pjsip.conf.
+
+[transport-udp-lab]
+type=transport
+protocol=udp
+bind=0.0.0.0:{{ sip_port }}
+{% if asterisk_public_ip or asterisk_external_host %}
+external_media_address={{ asterisk_public_ip | default(asterisk_external_host, true) }}
+external_signaling_address={{ asterisk_public_ip | default(asterisk_external_host, true) }}
+local_net={{ asterisk_local_net }}
+{% endif %}
+
+[1001]
+type=endpoint
+transport=transport-udp-lab
+context=from-internal-lab
+disallow=all
+allow=ulaw,alaw
+auth=1001-auth
+aors=1001-aor
+direct_media=no
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+dtmf_mode=rfc4733
+mailboxes=1001@default
+callerid="Lab 1001" <1001>
+allow_transfer=yes
+
+[1001-auth]
+type=auth
+auth_type=userpass
+username=1001
+password={{ extension_1001_password }}
+
+[1001-aor]
+type=aor
+max_contacts=2
+remove_existing=yes
+qualify_frequency=30
+
+[1002]
+type=endpoint
+transport=transport-udp-lab
+context=from-internal-lab
+disallow=all
+allow=ulaw,alaw
+auth=1002-auth
+aors=1002-aor
+direct_media=no
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+dtmf_mode=rfc4733
+mailboxes=1002@default
+callerid="Lab 1002" <1002>
+allow_transfer=yes
+
+[1002-auth]
+type=auth
+auth_type=userpass
+username=1002
+password={{ extension_1002_password }}
+
+[1002-aor]
+type=aor
+max_contacts=2
+remove_existing=yes
+qualify_frequency=30

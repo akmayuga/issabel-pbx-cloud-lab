@@ -1,0 +1,118 @@
+---
+- name: Configure Issabel 5 Asterisk lab features
+  hosts: issabel
+  become: true
+  vars_files:
+    - group_vars/issabel.yml
+
+  pre_tasks:
+    - name: Check whether Asterisk is installed
+      ansible.builtin.stat:
+        path: /usr/sbin/asterisk
+      register: asterisk_binary
+
+    - name: Stop if Issabel/Asterisk has not been installed yet
+      ansible.builtin.assert:
+        that:
+          - asterisk_binary.stat.exists
+        fail_msg: "Install Issabel 5 first. Run /root/issabel5-netinstall.sh or set run_issabel_netinstall=true in install_issabel.yml."
+
+  tasks:
+    - name: Ensure Asterisk runtime directories exist
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: asterisk
+        group: asterisk
+        mode: "{{ item.mode }}"
+        recurse: "{{ item.recurse | default(false) }}"
+      loop:
+        - { path: "/etc/asterisk", mode: "0755" }
+        - { path: "/var/spool/asterisk/voicemail/default", mode: "0770", recurse: true }
+        - { path: "{{ call_recordings_dir }}", mode: "0770", recurse: true }
+        - { path: "/var/lib/asterisk/sounds/custom", mode: "0775", recurse: true }
+
+    - name: Deploy PJSIP lab extensions
+      ansible.builtin.template:
+        src: templates/asterisk/pjsip_custom.conf.j2
+        dest: /etc/asterisk/pjsip_custom.conf
+        owner: asterisk
+        group: asterisk
+        mode: "0640"
+      notify: Reload asterisk
+
+    - name: Ensure pjsip.conf includes lab custom file
+      ansible.builtin.lineinfile:
+        path: /etc/asterisk/pjsip.conf
+        line: "#include pjsip_custom.conf"
+        create: true
+        owner: asterisk
+        group: asterisk
+        mode: "0644"
+      notify: Reload asterisk
+
+    - name: Deploy RTP configuration
+      ansible.builtin.template:
+        src: templates/asterisk/rtp_custom.conf.j2
+        dest: /etc/asterisk/rtp_custom.conf
+        owner: asterisk
+        group: asterisk
+        mode: "0644"
+      notify: Reload asterisk
+
+    - name: Ensure rtp.conf includes lab custom file
+      ansible.builtin.lineinfile:
+        path: /etc/asterisk/rtp.conf
+        line: "#include rtp_custom.conf"
+        create: true
+        owner: asterisk
+        group: asterisk
+        mode: "0644"
+      notify: Reload asterisk
+
+    - name: Deploy voicemail configuration
+      ansible.builtin.template:
+        src: templates/asterisk/voicemail_custom.conf.j2
+        dest: /etc/asterisk/voicemail_custom.conf
+        owner: asterisk
+        group: asterisk
+        mode: "0640"
+      notify: Reload asterisk
+
+    - name: Deploy dialplan for extensions, IVR, ring group, recording, time condition, and voicemail
+      ansible.builtin.template:
+        src: templates/asterisk/extensions_custom.conf.j2
+        dest: /etc/asterisk/extensions_custom.conf
+        owner: asterisk
+        group: asterisk
+        mode: "0644"
+      notify: Reload asterisk
+
+    - name: Deploy CDR CSV settings
+      ansible.builtin.template:
+        src: templates/asterisk/cdr_custom.conf.j2
+        dest: /etc/asterisk/cdr_custom.conf
+        owner: asterisk
+        group: asterisk
+        mode: "0644"
+      notify: Reload asterisk
+
+    - name: Enable and start Asterisk
+      ansible.builtin.service:
+        name: asterisk
+        enabled: true
+        state: started
+
+    - name: Validate PJSIP endpoint configuration
+      ansible.builtin.command: asterisk -rx "pjsip show endpoints"
+      register: pjsip_show
+      changed_when: false
+
+    - name: Show configured endpoint summary
+      ansible.builtin.debug:
+        var: pjsip_show.stdout_lines
+
+  handlers:
+    - name: Reload asterisk
+      ansible.builtin.command: asterisk -rx "core reload"
+      changed_when: true

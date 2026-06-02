@@ -1,0 +1,12 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+.terraform.lock.hcl
+*.retry
+*.tar.gz
+*.sha256
+backups/*
+!backups/.gitkeep
+ansible/group_vars/vault.yml
+.DS_Store

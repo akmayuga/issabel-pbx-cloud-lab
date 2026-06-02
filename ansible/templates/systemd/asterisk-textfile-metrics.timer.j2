@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh Asterisk Prometheus textfile metrics
+
+[Timer]
+OnBootSec=1m
+OnUnitActiveSec=30s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,28 @@
+---
+issabel_netinstall_url: "http://repo.issabel.org/issabel5-netinstall.sh"
+run_issabel_netinstall: false
+
+ssh_port: 22
+sip_port: 5060
+rtp_start_port: 10000
+rtp_end_port: 20000
+wireguard_port: 51820
+
+lab_domain: "pbx.example.com"
+lab_timezone: "America/New_York"
+trusted_admin_cidr: ""
+trusted_sip_cidr: ""
+fail2ban_ignoreip: "127.0.0.1/8 ::1"
+
+extension_1001_password: "CHANGE_ME_1001_32_PLUS_CHARS"
+extension_1002_password: "CHANGE_ME_1002_32_PLUS_CHARS"
+extension_1001_voicemail_pin: "100100"
+extension_1002_voicemail_pin: "100200"
+voicemail_email_domain: "example.com"
+
+asterisk_public_ip: ""
+asterisk_external_host: ""
+asterisk_local_net: "10.60.0.0/16"
+call_recordings_dir: "/var/spool/asterisk/monitor"
+backup_dir: "/var/backups/issabel"
+backup_retention_days: 14

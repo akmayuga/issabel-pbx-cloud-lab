@@ -1,0 +1,8 @@
+[Unit]
+Description=Issabel PBX daily backup
+
+[Service]
+Type=oneshot
+Environment=BACKUP_DIR={{ backup_dir }}
+Environment=RETENTION_DAYS={{ backup_retention_days }}
+ExecStart=/usr/local/sbin/backup.sh

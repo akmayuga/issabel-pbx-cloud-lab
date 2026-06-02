@@ -1,0 +1,20 @@
+tenancy_ocid         = "ocid1.tenancy.oc1..example"
+user_ocid            = "ocid1.user.oc1..example"
+fingerprint          = "12:34:56:78:90:ab:cd:ef:12:34:56:78:90:ab:cd:ef"
+private_key_path     = "/Users/you/.oci/oci_api_key.pem"
+compartment_ocid     = "ocid1.compartment.oc1..example"
+region               = "us-ashburn-1"
+ssh_public_key_path  = "/Users/you/.ssh/id_ed25519.pub"
+
+# Pick an x86_64 Oracle Linux 8, Rocky Linux 8, or AlmaLinux 8 image OCID in your OCI region.
+# Issabel 5's public ISO/netinstall is x86_64; do not use Ampere A1/ARM unless Issabel publishes ARM packages.
+image_id             = "ocid1.image.oc1.iad.example"
+instance_shape       = "VM.Standard.E2.1.Micro"
+swap_size_gb         = 2
+
+# Leave empty to auto-detect your current public IP as /32.
+operator_public_ip_cidr = ""
+
+# Keep SIP/RTP restricted. Set to your home/office public IP CIDR or your VPN subnet.
+sip_allowed_cidr        = ""
+web_allowed_cidr        = ""

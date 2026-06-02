@@ -1,0 +1,57 @@
+; Managed by Ansible for the Issabel lab.
+; Feature codes:
+; 1001 / 1002 - local extensions
+; 600         - ring group
+; 700         - IVR
+; 800         - time condition demo
+; *97        - voicemail main
+
+[from-internal-lab]
+exten => 1001,1,NoOp(Call to lab extension 1001)
+ same => n,Gosub(record-lab-call,s,1(${EXTEN}))
+ same => n,Dial(PJSIP/1001,20,Tt)
+ same => n,VoiceMail(1001@default,u)
+ same => n,Hangup()
+
+exten => 1002,1,NoOp(Call to lab extension 1002)
+ same => n,Gosub(record-lab-call,s,1(${EXTEN}))
+ same => n,Dial(PJSIP/1002,20,Tt)
+ same => n,VoiceMail(1002@default,u)
+ same => n,Hangup()
+
+exten => 600,1,NoOp(Ring group 600)
+ same => n,Gosub(record-lab-call,s,1(ringgroup-600))
+ same => n,Dial(PJSIP/1001&PJSIP/1002,25,Tt)
+ same => n,VoiceMail(1001@default,u)
+ same => n,Hangup()
+
+exten => 700,1,NoOp(IVR main menu)
+ same => n,Answer()
+ same => n,Set(TIMEOUT(digit)=5)
+ same => n,Set(TIMEOUT(response)=10)
+ same => n,Playback(demo-congrats)
+ same => n,Background(vm-enter-num-to-call)
+ same => n,WaitExten(10)
+
+exten => 1,1,Goto(1001,1)
+exten => 2,1,Goto(1002,1)
+exten => i,1,Playback(invalid)
+ same => n,Goto(700,2)
+exten => t,1,Playback(vm-goodbye)
+ same => n,Hangup()
+
+exten => 800,1,NoOp(Time condition demo)
+ same => n,GotoIfTime(09:00-17:00,mon-fri,*,*?open,1:closed,1)
+exten => open,1,Goto(1001,1)
+exten => closed,1,Goto(1002,1)
+
+exten => *97,1,NoOp(Voicemail login)
+ same => n,VoiceMailMain(${CALLERID(num)}@default)
+ same => n,Hangup()
+
+[record-lab-call]
+exten => s,1,NoOp(Start lab call recording)
+ same => n,Set(__LAB_RECORD_TARGET=${ARG1})
+ same => n,Set(__MONITOR_FILENAME={{ call_recordings_dir }}/${STRFTIME(${EPOCH},,%Y%m%d-%H%M%S)}-${CALLERID(num)}-${LAB_RECORD_TARGET})
+ same => n,MixMonitor(${MONITOR_FILENAME}.wav,b)
+ same => n,Return()

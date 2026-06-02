@@ -1,0 +1,15 @@
+; Managed by Ansible for the Issabel lab.
+
+[general]
+format=wav49|gsm|wav
+serveremail=pbx@{{ voicemail_email_domain }}
+attach=yes
+maxmsg=100
+maxsecs=180
+minsecs=2
+saycid=yes
+emaildateformat=%A, %B %d, %Y at %r
+
+[default]
+1001 => {{ extension_1001_voicemail_pin }},Lab Extension 1001,1001@{{ voicemail_email_domain }}
+1002 => {{ extension_1002_voicemail_pin }},Lab Extension 1002,1002@{{ voicemail_email_domain }}

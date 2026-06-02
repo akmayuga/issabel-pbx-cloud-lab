@@ -1,0 +1,6 @@
+[Unit]
+Description=Write Asterisk Prometheus textfile metrics
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/asterisk_textfile_metrics.sh /var/lib/node_exporter/textfile_collector

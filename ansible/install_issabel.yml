@@ -1,0 +1,212 @@
+---
+- name: Install Issabel 5 lab prerequisites and hardening
+  hosts: issabel
+  become: true
+  vars_files:
+    - group_vars/issabel.yml
+
+  tasks:
+    - name: Assert an x86_64 host for Issabel 5 public packages
+      ansible.builtin.assert:
+        that:
+          - ansible_architecture == "x86_64"
+        fail_msg: "Issabel 5 public ISO/netinstall is x86_64. Recreate the VM with an x86_64 OCI image/shape."
+
+    - name: Install operating system packages
+      ansible.builtin.dnf:
+        name:
+          - bash-completion
+          - bind-utils
+          - chrony
+          - curl
+          - fail2ban
+          - firewalld
+          - git
+          - htop
+          - jq
+          - lsof
+          - mailx
+          - net-tools
+          - policycoreutils-python-utils
+          - rsync
+          - tar
+          - tcpdump
+          - tmux
+          - unzip
+          - vim-enhanced
+          - wget
+        state: present
+        update_cache: true
+
+    - name: Enable baseline services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - chronyd
+        - firewalld
+        - fail2ban
+
+    - name: Open trusted TCP ports
+      ansible.posix.firewalld:
+        port: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      loop:
+        - "{{ ssh_port }}/tcp"
+        - "80/tcp"
+        - "443/tcp"
+        - "{{ sip_port }}/tcp"
+        - "3000/tcp"
+        - "9090/tcp"
+
+    - name: Open trusted UDP ports
+      ansible.posix.firewalld:
+        port: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      loop:
+        - "{{ sip_port }}/udp"
+        - "{{ rtp_start_port }}-{{ rtp_end_port }}/udp"
+        - "{{ wireguard_port }}/udp"
+
+    - name: Disable unneeded lab services when present
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      failed_when: false
+      loop:
+        - avahi-daemon
+        - bluetooth
+        - cups
+        - rpcbind
+
+    - name: Deploy Fail2Ban Asterisk filter
+      ansible.builtin.template:
+        src: templates/fail2ban/asterisk.local.j2
+        dest: /etc/fail2ban/filter.d/asterisk.local
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart fail2ban
+
+    - name: Deploy Fail2Ban jails
+      ansible.builtin.template:
+        src: templates/fail2ban/jail-issabel.local.j2
+        dest: /etc/fail2ban/jail.d/issabel.local
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart fail2ban
+
+    - name: Download official Issabel 5 netinstall script
+      ansible.builtin.get_url:
+        url: "{{ issabel_netinstall_url }}"
+        dest: /root/issabel5-netinstall.sh
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Run official Issabel 5 netinstall when explicitly enabled
+      ansible.builtin.command: /bin/bash /root/issabel5-netinstall.sh
+      args:
+        creates: /etc/issabel.conf
+      async: 7200
+      poll: 30
+      when: run_issabel_netinstall | bool
+
+    - name: Explain manual installer step when automatic run is disabled
+      ansible.builtin.debug:
+        msg:
+          - "Issabel netinstall script is staged at /root/issabel5-netinstall.sh."
+          - "Run it from SSH or console after reviewing prompts, or set run_issabel_netinstall=true."
+      when: not run_issabel_netinstall | bool
+
+    - name: Deploy lab operational scripts
+      ansible.builtin.copy:
+        src: "../scripts/{{ item }}"
+        dest: "/usr/local/sbin/{{ item }}"
+        owner: root
+        group: root
+        mode: "0750"
+      loop:
+        - alert_email.sh
+        - backup.sh
+        - dynamic_dns.sh
+        - healthcheck.sh
+        - install_docker.sh
+        - letsencrypt.sh
+        - restore.sh
+        - wireguard_setup.sh
+
+    - name: Deploy Asterisk textfile metrics script
+      ansible.builtin.copy:
+        src: "../monitoring/asterisk_textfile_metrics.sh"
+        dest: "/usr/local/sbin/asterisk_textfile_metrics.sh"
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Install daily backup timer unit
+      ansible.builtin.template:
+        src: templates/systemd/issabel-backup.service.j2
+        dest: /etc/systemd/system/issabel-backup.service
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install daily backup timer
+      ansible.builtin.template:
+        src: templates/systemd/issabel-backup.timer.j2
+        dest: /etc/systemd/system/issabel-backup.timer
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Enable daily backup timer
+      ansible.builtin.systemd:
+        name: issabel-backup.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Create Node Exporter textfile collector directory
+      ansible.builtin.file:
+        path: /var/lib/node_exporter/textfile_collector
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install Asterisk textfile metrics service
+      ansible.builtin.template:
+        src: templates/systemd/asterisk-textfile-metrics.service.j2
+        dest: /etc/systemd/system/asterisk-textfile-metrics.service
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install Asterisk textfile metrics timer
+      ansible.builtin.template:
+        src: templates/systemd/asterisk-textfile-metrics.timer.j2
+        dest: /etc/systemd/system/asterisk-textfile-metrics.timer
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Enable Asterisk textfile metrics timer
+      ansible.builtin.systemd:
+        name: asterisk-textfile-metrics.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Restart fail2ban
+      ansible.builtin.service:
+        name: fail2ban
+        state: restarted

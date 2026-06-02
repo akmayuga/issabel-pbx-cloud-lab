@@ -1,0 +1,20 @@
+[DEFAULT]
+ignoreip = {{ fail2ban_ignoreip }}{% if trusted_admin_cidr | length > 0 %} {{ trusted_admin_cidr }}{% endif %}
+bantime = 1h
+findtime = 10m
+maxretry = 5
+
+[sshd]
+enabled = true
+port = {{ ssh_port }}
+logpath = %(sshd_log)s
+
+[asterisk]
+enabled = true
+filter = asterisk
+logpath = /var/log/asterisk/messages
+backend = auto
+maxretry = 3
+findtime = 10m
+bantime = 4h
+action = firewallcmd-rich-rules[name=ASTERISK, port="{{ sip_port }}", protocol=udp]
