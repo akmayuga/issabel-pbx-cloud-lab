@@ -36,18 +36,13 @@ git push -u origin main
 
 3. In GitHub, open the repository.
 4. Go to `Settings -> Pages`.
-5. Under `Build and deployment`, choose `GitHub Actions`.
-6. Push to `main` again, or open `Actions -> Publish Project Demo Site -> Run workflow`.
-7. Your public demo URL will look like:
+5. Under `Build and deployment`, choose `Deploy from a branch`.
+6. Set branch to `main` and folder to `/docs`.
+7. Click `Save`.
+8. Your public demo URL will look like:
 
 ```text
 https://<YOUR_USERNAME>.github.io/issabel-pbx-cloud-lab/
-```
-
-The included workflow is:
-
-```text
-.github/workflows/pages.yml
 ```
 
 The public homepage is:
