@@ -14,6 +14,12 @@ docs/free_publish_strategy.md
 
 Important: GitHub Pages cannot run Issabel or Asterisk. It only publishes the project/demo website. A live PBX still needs a VM provider.
 
+If you are using AWS Free Tier or credits, follow:
+
+```text
+docs/aws_deployment.md
+```
+
 ## 1. Design Choice
 
 The lab uses one public VM because Issabel is a full PBX appliance stack, not a stateless web app. It needs persistent storage, privileged services, SIP/RTP UDP networking, Asterisk, a web GUI, logs, recordings, and backups.

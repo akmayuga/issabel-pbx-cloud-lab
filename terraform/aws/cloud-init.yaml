@@ -1,0 +1,27 @@
+#cloud-config
+package_update: true
+packages:
+  - curl
+  - wget
+  - tar
+  - unzip
+  - chrony
+write_files:
+  - path: /usr/local/sbin/create-lab-swap.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      SWAP_FILE=/swapfile
+      SWAP_SIZE_GB=${swap_size_gb}
+      if [ "$SWAP_SIZE_GB" -le 0 ] || [ -f "$SWAP_FILE" ]; then
+        exit 0
+      fi
+      fallocate -l "$${SWAP_SIZE_GB}G" "$SWAP_FILE" || dd if=/dev/zero of="$SWAP_FILE" bs=1M count="$((SWAP_SIZE_GB * 1024))"
+      chmod 600 "$SWAP_FILE"
+      mkswap "$SWAP_FILE"
+      swapon "$SWAP_FILE"
+      grep -q "$SWAP_FILE" /etc/fstab || echo "$SWAP_FILE none swap sw 0 0" >> /etc/fstab
+runcmd:
+  - systemctl enable --now chronyd
+  - /usr/local/sbin/create-lab-swap.sh

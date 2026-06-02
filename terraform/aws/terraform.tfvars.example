@@ -1,0 +1,14 @@
+aws_region    = "ap-southeast-2"
+instance_type = "t3.micro"
+key_name      = "issabel-lab-key"
+
+# If Terraform cannot find a Rocky Linux 8 AMI automatically, paste an x86_64 Rocky/Alma/Oracle Linux 8 AMI here.
+ami_id = ""
+
+# Leave empty to auto-detect your current public IP as /32.
+operator_public_ip_cidr = ""
+sip_allowed_cidr        = ""
+web_allowed_cidr        = ""
+
+root_volume_size_gb = 30
+swap_size_gb        = 2

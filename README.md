@@ -27,6 +27,8 @@ repository/
 
 Use Oracle Cloud Free Tier first. Issabel 5 public media is x86_64, so the OCI Always Free Ampere A1 ARM shape is not the right target for this lab unless Issabel publishes ARM packages. The default Terraform path uses an x86_64 VM shape, with swap to make a tiny Always Free AMD micro shape usable for a lab. A 2 GB or larger x86_64 VM is much smoother if you have free trial credits.
 
+If you have AWS Free Tier or promotional credits, use the [AWS EC2 Deployment Guide](docs/aws_deployment.md). AWS is often easier to start than Oracle signup, but watch billing carefully.
+
 ## Publish a Free Demo
 
 If you mainly need a public project demo for your portfolio, publish this repository with GitHub Pages. This is free and does not need a cloud VM. It publishes the project overview, architecture, deployment guide, security guide, and testing docs at a public URL.
